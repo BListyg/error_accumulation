@@ -1,13 +1,4 @@
-hurdle.data = function(propMin, nApplicants, nHurdles, rel, sr){
-  hurdle.gen = function(propMin, nApplicants, nHurdles, rel, sr){#, #sr
-    
-    #Load libraries
-    library(MASS) #generate multivariate normal data for applicant scores
-    library(stringi) #generate random alphanumeric values for applicant IDs
-    
-    #Function to mirror lower/upper triangle in matrix
-    f <- function(m) {
-      m[lower.tri(m)] <- t(m)[lower.tri(m)]
+     m[lower.tri(m)] <- t(m)[lower.tri(m)]
       m
     }
     
@@ -21,8 +12,10 @@ hurdle.data = function(propMin, nApplicants, nHurdles, rel, sr){
     #Mirror lower triangle of Var-CoVar matrix over diagonal
     sigma.hurdles <- f(sigma.hurdles)
     
+    error_var = ((1 - rel)/rel)
+    
     #Errors are uncorrelated, 1's on diagonal, zeroes elsewhere
-    sigma.error <- diag(1,nrow = nHurdles)
+    sigma.error <- diag(error_var,nrow = nHurdles)
     
     # Generate sample of potential true scores with 
     #mean = 0, sd = 1, and correlations from above
@@ -35,14 +28,14 @@ hurdle.data = function(propMin, nApplicants, nHurdles, rel, sr){
     #Generate matrix to put applicant hurdle scores, generated all at once
     appscore = matrix(ncol=nHurdles,nrow=nApplicants)
     
-
+    
     #Application score is based on formula by Scullen et al., 2005
     #For each value in the reliability vector, 
     #The corresponding column in the appscore matrix
     #is the reliability value times the potential (i.e. true score) of a given applicant
     #times the square root of 1 minus reliability time error
     for(i in 1:length(rel)){
-      appscore[,i] = rel[i]*potential[,i]+sqrt(1-(rel[i]^2))*error[,i]
+      appscore[,i] = potential[,i]+error[,i]
     }
     
     #Assigning group membership to applicants
@@ -66,10 +59,13 @@ hurdle.data = function(propMin, nApplicants, nHurdles, rel, sr){
   }
   
   #Generating an initial applicant pool with hurdle.gen inner function
-  hurdle0 = hurdle.gen(propMin = propMin,nApplicants = nApplicants,nHurdles = nHurdles, rel = rel)
+  hurdle0 = hurdle.gen(propMin = propMin,nApplicants = nApplicants,nHurdles = nHurdles, rel = rel, sr = sr)
+  
+  #dividing function
+  divide = function(x){x[1]/x[2]}
   
   #Sequentially removing applicants based on percentile rank
-    for(i in 1:nHurdles)
+  for(i in 1:nHurdles)
   {
     eval(parse(text = paste("hurdle",i, "=", "subset(hurdle",i-1,",","hurdle",i-1,"$hurdle.",i,"> quantile(hurdle",i-1,"$hurdle.",i,", prob = 1- sr[",i,"]))",sep = "")))
   }
@@ -82,10 +78,39 @@ hurdle.data = function(propMin, nApplicants, nHurdles, rel, sr){
     out[[i+1]] = eval(parse(text = paste("hurdle",i,sep="")))
   }
   
-  return(out)
-  
+  if(adverse.impact == TRUE){
+    return(list(table(out[[1]]$group.membership)/nrow(out[[1]]),
+                (table(out[[2]]$group.membership) / table(out[[1]]$group.membership)),
+                (table(out[[3]]$group.membership) / table(out[[2]]$group.membership)),
+                (table(out[[4]]$group.membership) / table(out[[3]]$group.membership)),
+                (table(out[[5]]$group.membership) / table(out[[4]]$group.membership)),
+                (table(out[[5]]$group.membership) / table(out[[1]]$group.membership))
+                 ))
+  }
+  else if(adverse.impact==FALSE){
+    return(out)}
+  else if(adverse.impact=="ALL"){
+    return(list(
+      out = out,
+      list(table(out[[1]]$group.membership)/nrow(out[[1]]),
+           (table(out[[2]]$group.membership) / table(out[[1]]$group.membership)),
+           (table(out[[3]]$group.membership) / table(out[[2]]$group.membership)),
+           (table(out[[4]]$group.membership) / table(out[[3]]$group.membership)),
+           (table(out[[5]]$group.membership) / table(out[[4]]$group.membership)),
+           (table(out[[5]]$group.membership) / table(out[[1]]$group.membership))
+      ),
+      lapply(list(table(out[[1]]$group.membership)/nrow(out[[1]]),
+                  (table(out[[2]]$group.membership) / table(out[[1]]$group.membership)),
+                  (table(out[[3]]$group.membership) / table(out[[2]]$group.membership)),
+                  (table(out[[4]]$group.membership) / table(out[[3]]$group.membership)),
+                  (table(out[[5]]$group.membership) / table(out[[4]]$group.membership)),
+                  (table(out[[5]]$group.membership) / table(out[[1]]$group.membership))
+      ),FUN = divide),
+      cbind(table(out[[1]]$group.membership),
+            table(out[[2]]$group.membership),
+            table(out[[3]]$group.membership),
+            table(out[[4]]$group.membership),
+            table(out[[5]]$group.membership))
+    ))
+  }
 }
-
-#Example 
-hurdle.data(propMin = 0.5,nApplicants = 200,nHurdles = 4, rel = c(0.7,0.7,0.8,0.8), sr = c(0.5,0.5,0.5,0.5))
-
