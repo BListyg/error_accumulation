@@ -1,4 +1,13 @@
-     m[lower.tri(m)] <- t(m)[lower.tri(m)]
+hurdle.data = function(propMin, nApplicants, nHurdles, rel, sr,adverse.impact){
+  hurdle.gen = function(propMin, nApplicants, nHurdles, rel, sr){#, #sr
+    
+    #Load libraries
+    library(MASS) #generate multivariate normal data for applicant scores
+    library(stringi) #generate random alphanumeric values for applicant IDs
+    
+    #Function to mirror lower/upper triangle in matrix
+    f <- function(m) {
+      m[lower.tri(m)] <- t(m)[lower.tri(m)]
       m
     }
     
