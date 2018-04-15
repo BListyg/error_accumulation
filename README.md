@@ -16,9 +16,11 @@ Pseudocode:
 
 * Computes Adverse Impact at each hurdle
 
-'''hurdle.data(propMin = 0.5, 
+'''
+hurdle.data(propMin = 0.5, 
             nApplicants = 100, 
             nHurdles = 4, 
             rel = rep(1,4), 
             sr = rep(0.4, 4), 
-            adverse.impact = FALSE)'''
+            adverse.impact = FALSE)
+'''
