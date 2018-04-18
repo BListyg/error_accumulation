@@ -1,5 +1,8 @@
 # error_accumulation
-Simulation code demonstrating the propagation of error in sequential organizational systems (i.e. multiple hurdle selection system)
+
+This is simulation code for a symposium I presented at on the utility of agent-based / computational modelling in the organizational sciences. This is a joint work with Dr. Michael Braun, Christina Barnett, Michelle Kaplan, and Shannon Cooney from the University of South Florida.
+
+This simulation code demonstrates the inferrential errors that can occur in sequential organizational systems (e.g. a multiple hurdle selection system)
 
 Pseudocode:
 
